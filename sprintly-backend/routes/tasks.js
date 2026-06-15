@@ -34,16 +34,23 @@ router.get('/:id', protect, async (req, res) => {
 router.post('/', protect, async (req, res) => {
   const { title, description, status, priority, dueDate, project, assignedTo } = req.body;
   try {
-    const task = await Task.create({
+    // sanitize potential empty-string values which would cause Mongoose cast errors
+    const sanitized = {
       title,
       description,
       status,
       priority,
-      dueDate,
       project,
-      assignedTo,
       createdBy: req.user._id,
-    });
+    };
+
+    // only set assignedTo if a non-empty value was provided, otherwise null
+    if (assignedTo && assignedTo !== '') sanitized.assignedTo = assignedTo;
+
+    // parse dueDate if provided, otherwise leave undefined so schema can apply default/null
+    if (dueDate && dueDate !== '') sanitized.dueDate = new Date(dueDate);
+
+    const task = await Task.create(sanitized);
 
     const populated = await task.populate('assignedTo', 'name email');
     res.status(201).json(populated);
@@ -55,11 +62,18 @@ router.post('/', protect, async (req, res) => {
 // @route PUT /api/tasks/:id
 router.put('/:id', protect, async (req, res) => {
   try {
-    const task = await Task.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    )
+    // sanitize update payload to avoid casting empty strings to ObjectId/Date
+    const updateData = { ...req.body };
+    if (Object.prototype.hasOwnProperty.call(updateData, 'assignedTo') && (updateData.assignedTo === '' || updateData.assignedTo === null)) {
+      updateData.assignedTo = null;
+    }
+    if (Object.prototype.hasOwnProperty.call(updateData, 'dueDate') && (updateData.dueDate === '' || updateData.dueDate === null)) {
+      updateData.dueDate = null;
+    } else if (updateData.dueDate) {
+      updateData.dueDate = new Date(updateData.dueDate);
+    }
+
+    const task = await Task.findByIdAndUpdate(req.params.id, updateData, { new: true })
       .populate('assignedTo', 'name email')
       .populate('createdBy', 'name email');
 
