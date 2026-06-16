@@ -13,13 +13,17 @@ const server = http.createServer(app);
 // socket.io setup
 const io = new Server(server, {
   cors: {
-    origin: ['http://localhost:3000', 'http://localhost:3001'],
+    origin: ['http://localhost:3000', 'http://localhost:3001', 'https://sprintly-io.vercel.app'],
     methods: ['GET', 'POST'],
+    credentials: true
   },
 });
 
 // middleware
-app.use(cors({ origin: ['http://localhost:3000', 'http://localhost:3001'] }));
+app.use(cors({ 
+  origin: ['http://localhost:3000', 'http://localhost:3001', 'https://sprintly-io.vercel.app'],
+  credentials: true
+}));
 app.use(express.json());
 
 // routes
