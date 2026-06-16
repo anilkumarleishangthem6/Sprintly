@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // base url for our backend api
 const API = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: 'https://sprintly-backend-jnv8.onrender.com',
 });
 
 // attach token to every request if user is logged in
